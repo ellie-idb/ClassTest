@@ -12,8 +12,73 @@ typedef const char* StringTableEntry;
 extern DWORD ImageBase;
 extern DWORD ImageSize;
 
-
+// yuck
+#define Offset(x, cls) ((size_t)((const char *)&(((cls *)0)->x)-(const char *)0))
 #include "tvector.h"
+
+enum
+{
+	TypeChar,
+	TypeU8,
+	TypeS16,
+	TypeU16,
+	TypeInt,
+	TypeIntList,
+	TypeBool,
+	TypeBoolList,
+	TypeFloat,
+	TypeFloatList,
+	TypeString,
+	TypeCaseString,
+	TypeFileName,
+	TypeEnumVal,
+	TypeFlag,
+	TypeColorI,
+	TypeColorF,
+	TypeSimObjectPtr,
+	TypePoint2I,
+	TypePoint2F,
+	TypePoint3F,
+	TypePoint4F,
+	TypeRectI,
+	TypeRectF,
+	TypeMatrixPosition,
+	TypeMatrixRotation,
+	TypeBox3F,
+	TypeGuiProfile,
+};
+
+enum
+{
+	SizeTypeChar = 1,
+	SizeTypeU8 = 1,
+	SizeTypeS16 = 2,
+	SizeTypeU16 = 2,
+	SizeTypeInt = 4,
+	SizeTypeIntList = 12,
+	SizeTypeBool = 1,
+	SizeTypeBoolList = 12,
+	SizeTypeFloat = 4,
+	SizeTypeFloatList = 12,
+	SizeTypeString = 4,
+	SizeTypeCaseString = 4,
+	SizeTypeFileName = 4,
+	SizeTypeEnumVal = 4,
+	SizeTypeFlag = 4,
+	SizeTypeColorI = 4,
+	SizeTypeColorF = 16,
+	SizeTypeSimObjectPtr = 4,
+	SizeTypePoint2I = 8,
+	SizeTypePoint2F = 8,
+	SizeTypePoint3F = 12,
+	SizeTypePoint4F = 16,
+	SizeTypeRectI = 16,
+	SizeTypeRectF = 16,
+	SizeTypeMatrixPosition = 4,
+	SizeTypeMatrixRotation = 64,
+	SizeTypeBox3F = 24,
+	SizeTypeGuiProfile = 4,
+};
 
 class Namespace
 {
@@ -188,8 +253,8 @@ protected:
 	static ConsoleObject* create(const U32 groupId, const U32 typeId, const U32 in_classId);
 public:
 
-	static AbstractClassRep**** classTable;
-	static AbstractClassRep* classLinkList;
+	static AbstractClassRep***** classTable;
+	static AbstractClassRep** classLinkList;
 	static U32*                classCRC;
 	static U32**  NetClassCount;
 	static U32**  NetClassBitSize;
@@ -200,7 +265,7 @@ public:
 
 inline AbstractClassRep* AbstractClassRep::getClassList()
 {
-	return classLinkList;
+	return *classLinkList;
 }
 
 inline U32 AbstractClassRep::getClassCRC(U32 group)
@@ -350,13 +415,13 @@ protected:
 	///
 	/// This is used in the consoleDoc system.
 	/// @see console_autodoc
-	static void addGroup(const char* in_pGroupname, const char* in_pGroupDocs = NULL);
+	static void __fastcall addGroup(const char* in_pGroupname, const char* in_pGroupDocs = NULL);
 
 	/// Mark the end of a group of fields.
 	///
 	/// This is used in the consoleDoc system.
 	/// @see console_autodoc
-	static void endGroup(const char* in_pGroupname);
+	static void __fastcall endGroup(const char* in_pGroupname);
 
 	/// Register a complex field.
 	///
@@ -366,7 +431,7 @@ protected:
 	/// @param  in_elementCount   Number of elements in this field. Arrays of elements are assumed to be contiguous in memory.
 	/// @param  in_table          An EnumTable, if this is an enumerated field.
 	/// @param  in_pFieldDocs     Usage string for this field. @see console_autodoc
-	static void addField(const char* in_pFieldname,
+	static void __fastcall addField(const char* in_pFieldname,
 		const U32     in_fieldType,
 		const size_t in_fieldOffset,
 		const U32     in_elementCount = 1,
@@ -379,7 +444,7 @@ protected:
 	/// @param  in_fieldType   Type of the field. @see ConsoleDynamicTypes
 	/// @param  in_fieldOffset Offset to  the field from the start of the class; calculated using the Offset() macro.
 	/// @param  in_pFieldDocs  Usage string for this field. @see console_autodoc
-    void addField(const char* in_pFieldname,
+    static void __fastcall addField(const char* in_pFieldname,
 		const U32     in_fieldType,
 		const size_t in_fieldOffset,
 		const char* in_pFieldDocs)
@@ -396,7 +461,7 @@ protected:
 	///
 	/// @see addField
 	/// @see typeValidators.h
-	static void addFieldV(const char* in_pFieldname,
+	static void __fastcall addFieldV(const char* in_pFieldname,
 		const U32      in_fieldType,
 		const size_t  in_fieldOffset,
 		TypeValidator* v,
@@ -406,7 +471,7 @@ protected:
 	///
 	/// A deprecated field will always be undefined, even if you assign a value to it. This
 	/// is useful when you need to make sure that a field is not being used anymore.
-	static void addDepricatedField(const char* fieldName);
+	static void __fastcall addDeprecatedField(const char* fieldName);
 
 	/// Remove a field.
 	///

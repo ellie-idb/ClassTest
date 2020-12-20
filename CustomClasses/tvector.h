@@ -5,6 +5,11 @@
 
 #ifndef _TVECTOR_H_
 #define _TVECTOR_H_
+
+#ifndef dFreeFn
+typedef void(__fastcall* dFreeFn)(void* block);
+extern dFreeFn dFree;
+#endif
 #include "structs.h"
 #include <cstdlib>
 
@@ -19,7 +24,8 @@ extern bool VectorResize(U32* aSize, U32* aCount, void** arrayPtr, U32 newCount,
 	const char* fileName,
 	const U32   lineNum);
 #else
-//extern bool VectorResize(U32* aSize, U32* aCount, void** arrayPtr, U32 newCount, U32 elemSize);
+typedef bool(__fastcall* VectorResizeFn)(U32* aSize, U32* aCount, void** arrayPtr, U32 newCount, U32 elemSize);
+extern VectorResizeFn VectorResize;
 #endif
 
 
@@ -151,7 +157,7 @@ public:
 
 template<class T> inline Vector<T>::~Vector()
 {
-	free(mArray);
+	dFree(mArray);
 }
 
 template<class T> inline Vector<T>::Vector(const U32 initialSize)

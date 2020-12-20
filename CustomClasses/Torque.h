@@ -27,7 +27,7 @@
 #define ConsoleMethod(type, function) type ts_##function(SimObject* obj, int argc, const char* argv[])
 #define RegisterMethod(name, description, argmin, argmax) AddFunction(NULL, #name, ts_##name, description, argmin, argmax);
 #define RegisterMethodNS(namespace, name, desc, argmin, argmax) AddFunction(#namespace, #name, ts_##name, desc, argmin, argmax);
-#define RegisterCaseSensMethodNS(namespace, name, desc, argmin, argmax) AddFunction(#namespace, #name, ts_##name, desc, argmin, argmax, true);
+#define RegisterInternalMethod(namespace, name, desc, argmin, argmax) AddInternalFunction(namespace, #name, ts_##name, desc, argmin, argmax, true);
 
 //Start of the Blockland.exe module in memory
 extern DWORD ImageBase;
@@ -71,6 +71,11 @@ BLFUNC_EXTERN(const char*, __thiscall, CodeBlockCompileExec, CodeBlock * this_, 
 BLFUNC_EXTERN(void*, __fastcall, dAlloc, size_t size);
 BLFUNC_EXTERN(void, __fastcall, dFree, void* buf);
 
+BLFUNC_EXTERN(void, __fastcall, ConsoleObjectAddGroup, const char* groupName, const char* groupDocs);
+BLFUNC_EXTERN(void, __fastcall, ConsoleObjectEndGroup, const char* groupName);
+BLFUNC_EXTERN(void,  __fastcall, ConsoleObjectAddField, const char* fieldName, U32 fieldType, size_t fieldOffset, U32 elementCount, EnumTable* table, const char* fieldDocs);
+BLFUNC_EXTERN(void, __fastcall, ConsoleObjectAddFieldV, const char* pFieldName, U32 fieldType, size_t fieldOffset, TypeValidator * validator);
+BLFUNC_EXTERN(void, __fastcall, ConsoleObjectAddDeprecatedField, const char* fieldName);
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //Public functions
@@ -81,6 +86,27 @@ DWORD ScanFunc(char* pattern, char* mask);
 
 //Change a byte at a specific location in memory
 void PatchByte(BYTE* location, BYTE value);
+
+
+//Register a torquescript function that returns a string. The function must look like this:
+//const char* func(DWORD* obj, int argc, const char* argv[])
+void AddInternalFunction(Namespace* nameSpace, const char* name, Namespace::StringCallback callBack, const char* usage, int minArgs, int maxArgs, bool caseSens = false);
+
+//Register a torquescript function that returns an int. The function must look like this:
+//int func(DWORD* obj, int argc, const char* argv[])
+void AddInternalFunction(Namespace* nameSpace, const char* name, Namespace::IntCallback callBack, const char* usage, int minArgs, int maxArgs, bool caseSens = false);
+
+//Register a torquescript function that returns a float. The function must look like this:
+//float func(DWORD* obj, int argc, const char* argv[])
+void AddInternalFunction(Namespace* nameSpace, const char* name, Namespace::FloatCallback callBack, const char* usage, int minArgs, int maxArgs, bool caseSens = false);
+
+//Register a torquescript function that returns nothing. The function must look like this:
+//void func(DWORD* obj, int argc, const char* argv[])
+void AddInternalFunction(Namespace* nameSpace, const char* name, Namespace::VoidCallback callBack, const char* usage, int minArgs, int maxArgs, bool caseSens = false);
+
+//Register a torquescript function that returns a bool. The function must look like this:
+//bool func(DWORD* obj, int argc, const char* argv[])
+void AddInternalFunction(Namespace* nameSpace, const char* name, Namespace::BoolCallback callBack, const char* usage, int minArgs, int maxArgs, bool caseSens = false);
 
 //Register a torquescript function that returns a string. The function must look like this:
 //const char* func(DWORD* obj, int argc, const char* argv[])

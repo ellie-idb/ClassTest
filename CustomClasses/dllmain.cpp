@@ -1,9 +1,7 @@
-#include <cstdlib>
-#include "Torque.h"
 #include <polyhook2/Detour/x86Detour.hpp>
 #include <polyhook2/CapstoneDisassembler.hpp>
-#include <iostream>
-#include <fstream>
+#include "Torque.h"
+#include "TestClass.h"
 
 #pragma comment(lib, "PolyHook_2.lib")
 #pragma comment(lib, "capstone_dll.lib")
@@ -16,11 +14,7 @@ PLH::x86Detour* ACR_InitializeDetour = NULL;
 uint64_t ACR_InitializeTramp = NULL;
 ACR_InitializeFn ACR_Initialize = NULL;
 
-bool enableTrace = false;
-static int frameCount = 0;
 void* pSimObjectVTable;
-
-#include "TestClass.h"
 
 void h_ACRInit()
 {
@@ -31,12 +25,13 @@ void h_ACRInit()
 
 int h_RTDynamicCast(DWORD a1, DWORD a2, DWORD a3, DWORD a4, DWORD a5)
 {
-	if (a4 == (ImageBase + 0x39CE2C) || a4 == (ImageBase + 0x39D020))
-	{
+	// 0x39CE2C == SimObject, 0x39D020 == ConsoleObject
+	if (a4 == (ImageBase + 0x39CE2C) || a4 == (ImageBase + 0x39D020)) {
 		if (a1) {
 			// Printf("%x %x %x %x %x", a1, a2, a3, a4, a5);
 			// Printf("%x", TestClass::getStaticClassRep());
 			// Printf("%x", actual->getClassRep());
+
 			// intercept it if it's coming right for us
 			ConsoleObject* actual = (ConsoleObject*)a1;
 			if (actual->getClassRep() == TestClass::getStaticClassRep())
@@ -58,9 +53,10 @@ DWORD WINAPI Init(LPVOID args)
 
 	Printf("ModuleBase: %x", ImageBase);
 	pSimObjectVTable = (void*)(ImageBase + 0x31A404);
-	AbstractClassRep::classLinkList = *(AbstractClassRep**)(ImageBase + 0x3C5D18);
-	AbstractClassRep::classTable = *reinterpret_cast<AbstractClassRep*****>((void*)(ImageBase + 0x3C6180));
+	AbstractClassRep::classLinkList = (AbstractClassRep**)(ImageBase + 0x3C5D18);
+	AbstractClassRep::classTable = reinterpret_cast<AbstractClassRep*****>((void*)(ImageBase + 0x3C6180));
 	AbstractClassRep::NetClassCount = (U32**)(ImageBase + 0x3C6150);
+	
 	PLH::CapstoneDisassembler dis(PLH::Mode::x86);
 	RTDynamicCast = (RTDynamicCastFn)(ImageBase + 0x2DA71B);
 	ACR_Initialize = (ACR_InitializeFn)(ImageBase + 0x42510);

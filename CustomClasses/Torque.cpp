@@ -1,14 +1,13 @@
 #include "Torque.h"
 #include "structs.h"
-#include <stdio.h>
+#include <cstdio>
 #include <Psapi.h>
-
-//Con::printf
-PrintfFn Printf;
 
 DWORD ImageBase = NULL;
 DWORD ImageSize = NULL;
 
+//Con::printf
+PrintfFn Printf;
 //StringTable::insert
 StringTableInsertFn StringTableInsert;
 //Namespace::find
@@ -30,6 +29,12 @@ CodeBlockConstructorFn CodeBlockConstructor;
 CodeBlockCompileExecFn CodeBlockCompileExec;
 dAllocFn dAlloc;
 dFreeFn dFree;
+VectorResizeFn VectorResize;
+ConsoleObjectAddGroupFn ConsoleObjectAddGroup;
+ConsoleObjectEndGroupFn ConsoleObjectEndGroup;
+ConsoleObjectAddFieldFn ConsoleObjectAddField;
+ConsoleObjectAddFieldVFn ConsoleObjectAddFieldV;
+ConsoleObjectAddDeprecatedFieldFn ConsoleObjectAddDeprecatedField;
 
 // TODO: use tork allocators
 void* operator new (size_t size) { return dAlloc(size); }
@@ -114,6 +119,76 @@ Namespace::Entry* InsertFunction(const char* nameSpace, const char* name, bool c
 	Namespace::Entry* entry = NamespaceCreateLocalEntry(ns, StringTableInsert(name, caseSens));
 	NamespaceTrashCache();
 	return entry;
+}
+
+Namespace::Entry* InsertInternalFunction(Namespace* ns, const char* name, bool caseSens)
+{
+	if (!ns) return nullptr;
+
+	Namespace::Entry* entry = NamespaceCreateLocalEntry(ns, StringTableInsert(name, caseSens));
+	NamespaceTrashCache();
+	return entry;
+}
+
+
+//Register a torquescript function that returns a string. The function must look like this:
+//const char* func(DWORD* obj, int argc, const char* argv[])
+void AddInternalFunction(Namespace* ns, const char* name, Namespace::StringCallback cb, const char* usage, int minArgs, int maxArgs, bool caseSens)
+{
+	Namespace::Entry* func = InsertInternalFunction(ns, name, caseSens);
+	func->mUsage = usage;
+	func->mMaxArgs = maxArgs;
+	func->mMinArgs = minArgs;
+	func->mType = Namespace::Entry::StringCallbackType;
+	func->cb.mStringCallbackFunc = cb;
+}
+
+//Register a torquescript function that returns an int. The function must look like this:
+//int func(DWORD* obj, int argc, const char* argv[])
+void AddInternalFunction(Namespace* ns, const char* name, Namespace::IntCallback cb, const char* usage, int minArgs, int maxArgs, bool caseSens)
+{
+	Namespace::Entry* func = InsertInternalFunction(ns, name, caseSens);
+	func->mUsage = usage;
+	func->mMaxArgs = maxArgs;
+	func->mMinArgs = minArgs;
+	func->mType = Namespace::Entry::IntCallbackType;
+	func->cb.mIntCallbackFunc = cb;
+}
+
+//Register a torquescript function that returns a float. The function must look like this:
+//float func(DWORD* obj, int argc, const char* argv[])
+void AddInternalFunction(Namespace* ns, const char* name, Namespace::FloatCallback cb, const char* usage, int minArgs, int maxArgs, bool caseSens)
+{
+	Namespace::Entry* func = InsertInternalFunction(ns, name, caseSens);
+	func->mUsage = usage;
+	func->mMaxArgs = maxArgs;
+	func->mMinArgs = minArgs;
+	func->mType = Namespace::Entry::FloatCallbackType;
+	func->cb.mFloatCallbackFunc = cb;
+}
+
+//Register a torquescript function that returns nothing. The function must look like this:
+//void func(DWORD* obj, int argc, const char* argv[])
+void AddInternalFunction(Namespace* ns, const char* name, Namespace::VoidCallback cb, const char* usage, int minArgs, int maxArgs, bool caseSens)
+{
+	Namespace::Entry* func = InsertInternalFunction(ns, name, caseSens);
+	func->mUsage = usage;
+	func->mMaxArgs = maxArgs;
+	func->mMinArgs = minArgs;
+	func->mType = Namespace::Entry::VoidCallbackType;
+	func->cb.mVoidCallbackFunc = cb;
+}
+
+//Register a torquescript function that returns a bool. The function must look like this:
+//bool func(DWORD* obj, int argc, const char* argv[])
+void AddInternalFunction(Namespace* ns, const char* name, Namespace::BoolCallback cb, const char* usage, int minArgs, int maxArgs, bool caseSens)
+{
+	Namespace::Entry* func = InsertInternalFunction(ns, name, caseSens);
+	func->mUsage = usage;
+	func->mMaxArgs = maxArgs;
+	func->mMinArgs = minArgs;
+	func->mType = Namespace::Entry::BoolCallbackType;
+	func->cb.mBoolCallbackFunc = cb;
 }
 
 //Register a torquescript function that returns a string. The function must look like this:
@@ -242,5 +317,11 @@ bool InitTorqueStuff()
 	dAlloc = (dAllocFn)(ImageBase + 0x178160);
 	CodeBlockConstructor = (CodeBlockConstructorFn)(ImageBase + 0x335B0);
 	CodeBlockCompileExec = (CodeBlockCompileExecFn)(ImageBase + 0x340A0);
+	VectorResize = (VectorResizeFn)(ImageBase + 0x53CB0);
+	ConsoleObjectAddGroup = (ConsoleObjectAddGroupFn)(ImageBase + 0x428A0);
+	ConsoleObjectEndGroup = (ConsoleObjectEndGroupFn)(ImageBase + 0x429B0);
+	ConsoleObjectAddField = (ConsoleObjectAddFieldFn)(ImageBase + 0x42AB0);
+	ConsoleObjectAddFieldV = (ConsoleObjectAddFieldVFn)(ImageBase + 0x42B70);
+	ConsoleObjectAddDeprecatedField = (ConsoleObjectAddDeprecatedFieldFn)(ImageBase + 0x42C20);
 	return true;
 }
